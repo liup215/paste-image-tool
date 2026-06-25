@@ -158,30 +158,58 @@ func (s *ImageSaver) GetFormattedPath(absolutePath string) string {
 
 	switch format {
 	case "relative":
-		// 尝试转换为相对路径
-		wd, _ := os.Getwd()
-		rel, err := filepath.Rel(wd, absolutePath)
-		if err == nil {
-			return rel
-		}
-		return absolutePath
+		// 获取保存目录的相对路径部分
+		// 用户期望的是相对于当前工作目录的简单路径，如 ./fig/image.png
+		relPath := s.getSimpleRelativePath(absolutePath)
+		return relPath
 
 	case "markdown":
 		// Markdown 格式: ![image](path)
 		filename := filepath.Base(absolutePath)
-		return fmt.Sprintf("![%s](%s)", filename, absolutePath)
+		relPath := s.getSimpleRelativePath(absolutePath)
+		return fmt.Sprintf("![%s](%s)", filename, relPath)
 
 	case "html":
 		// HTML 格式
-		return fmt.Sprintf(`<img src="%s" alt="image" />`, absolutePath)
+		relPath := s.getSimpleRelativePath(absolutePath)
+		return fmt.Sprintf(`<img src="%s" alt="image" />`, relPath)
 
 	case "url":
 		// URL 格式
 		return "file://" + strings.ReplaceAll(absolutePath, "\\", "/")
 
 	default: // absolute
-		return absolutePath
+		// 绝对路径也使用正斜杠，便于在代码中使用
+		return strings.ReplaceAll(absolutePath, "\\", "/")
 	}
+}
+
+// getSimpleRelativePath 获取简单的相对路径
+// 从保存目录中提取相对路径，格式为 ./dir/file.png
+func (s *ImageSaver) getSimpleRelativePath(absolutePath string) string {
+	// 获取当前工作目录
+	wd, err := os.Getwd()
+	if err != nil {
+		// 如果无法获取工作目录，返回正斜杠格式的绝对路径
+		return strings.ReplaceAll(absolutePath, "\\", "/")
+	}
+	
+	// 尝试计算相对路径
+	rel, err := filepath.Rel(wd, absolutePath)
+	if err != nil {
+		// 如果无法计算相对路径，返回正斜杠格式的绝对路径
+		return strings.ReplaceAll(absolutePath, "\\", "/")
+	}
+	
+	// 转换为正斜杠
+	rel = strings.ReplaceAll(rel, "\\", "/")
+	
+	// 如果路径不以 ./ 开头且不是以 / 开头，添加 ./
+	if !strings.HasPrefix(rel, "./") && !strings.HasPrefix(rel, "/") && !strings.HasPrefix(rel, "../") {
+		rel = "./" + rel
+	}
+	
+	return rel
 }
 
 // GetImageInfo 获取图片信息
