@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=My Product
+Comment=A paste-image-tool application
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/paste-image-tool.exe %u
+Terminal=false
+Type=Application
+Icon=paste-image-tool.exe
+Categories=Utility;
+StartupWMClass=paste-image-tool.exe
+
+ 
