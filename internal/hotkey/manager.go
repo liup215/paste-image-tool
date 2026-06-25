@@ -118,6 +118,13 @@ func (m *Manager) Stop() {
 		return
 	}
 	m.running = false
+	
+	// 注销所有已注册的热键
+	for id := range m.hotkeys {
+		procUnregisterHotKey.Call(m.hwnd, uintptr(id))
+	}
+	m.hotkeys = make(map[int]*Hotkey)
+	
 	close(m.stopChan)
 }
 
